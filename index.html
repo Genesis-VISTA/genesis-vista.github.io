@@ -3,10 +3,739 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Genesis Vista</title>
+    <title>VISTA | Visual Intelligence for Scientific & Tooling Assistant</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Figtree:wght@500;600;700&family=Roboto:wght@400;500;700&display=swap");
+    </style>
+    <style>
+      :root {
+        --bg: #0f1b2b;
+        --paper: #132235;
+        --panel: #17293f;
+        --panel-strong: #1b314b;
+        --text: #eef4fb;
+        --muted: #aab9ca;
+        --line: rgba(156, 226, 255, 0.16);
+        --accent: #9ce2ff;
+        --accent-alt: #00608c;
+        --accent-2: #ffbdc4;
+        --accent-rose: #f4a5b1;
+        --accent-red: #a6111b;
+        --accent-gold: #e6c500;
+        --accent-green: #0b730b;
+        --accent-deep: #d8efff;
+        --accent-soft: rgba(156, 226, 255, 0.12);
+        --shadow: 0 24px 48px rgba(0, 0, 0, 0.28);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Roboto", system-ui, -apple-system, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top left, rgba(0, 96, 140, 0.34), transparent 26%),
+          radial-gradient(circle at 85% 12%, rgba(166, 17, 27, 0.14), transparent 18%),
+          radial-gradient(circle at 78% 34%, rgba(244, 165, 177, 0.11), transparent 16%),
+          radial-gradient(circle at 18% 62%, rgba(230, 197, 0, 0.07), transparent 18%),
+          radial-gradient(circle at 84% 78%, rgba(244, 165, 177, 0.08), transparent 14%),
+          radial-gradient(circle at 8% 86%, rgba(11, 115, 11, 0.05), transparent 14%),
+          linear-gradient(180deg, #11233a 0%, #0f1b2b 100%);
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .page {
+        width: min(1380px, calc(100% - 1.5rem));
+        margin: 0 auto;
+        padding: 1rem 0 4.5rem;
+      }
+
+      .hero {
+        position: relative;
+        padding: 1rem 0 0;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        top: 8%;
+        right: 8%;
+        width: 18rem;
+        height: 18rem;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(244, 165, 177, 0.12), transparent 68%);
+        pointer-events: none;
+        filter: blur(6px);
+      }
+
+      .hero::after {
+        content: "";
+        position: absolute;
+        left: 38%;
+        bottom: -3%;
+        width: 16rem;
+        height: 16rem;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(230, 197, 0, 0.06), transparent 70%);
+        pointer-events: none;
+        filter: blur(8px);
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        padding: 0 0 1.35rem;
+      }
+
+      .brand-logo {
+        display: block;
+        width: auto;
+        max-width: 230px;
+        max-height: 46px;
+      }
+
+      .topbar a {
+        text-decoration: none;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .topbar a:hover {
+        color: var(--accent);
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(360px, 0.78fr) minmax(0, 1.22fr);
+        gap: 2rem;
+        align-items: center;
+        padding: 0;
+      }
+
+      .hero-copy,
+      .hero-demo,
+      .section-card,
+      .pillar {
+        background: transparent;
+      }
+
+      .hero-copy {
+        padding: 2.2rem 0 1.2rem;
+      }
+
+      .eyebrow {
+        margin: 0 0 1rem;
+        color: var(--accent-rose);
+        font-size: 0.76rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        font-weight: 700;
+        line-height: 0.96;
+        font-family: "Figtree", system-ui, sans-serif;
+      }
+
+      h1 {
+        font-size: clamp(3.6rem, 7vw, 6.4rem);
+        max-width: none;
+        letter-spacing: -0.05em;
+        color: var(--text);
+      }
+
+      .subtitle {
+        margin: 1.2rem 0 0;
+        font-size: 1.06rem;
+        line-height: 1.8;
+        color: var(--muted);
+        max-width: 56ch;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+      }
+
+      .button,
+      .button-secondary {
+        font-family: "Figtree", system-ui, sans-serif;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        text-decoration: none;
+        font-size: 0.96rem;
+        transition: background 180ms ease, color 180ms ease;
+      }
+
+      .button {
+        background: var(--accent);
+        color: #102235;
+        border: 1px solid rgba(156, 226, 255, 0.8);
+        box-shadow: 0 10px 24px rgba(156, 226, 255, 0.12);
+      }
+
+      .button-secondary {
+        border: 1px solid rgba(156, 226, 255, 0.24);
+        background: transparent;
+        color: var(--text);
+      }
+
+      .button:hover,
+      .button-secondary:hover {
+        background: #203954;
+        color: var(--text);
+      }
+
+      .hero-demo {
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+      }
+
+      .demo-label {
+        margin: 0 0 0.9rem;
+        color: var(--accent);
+        font-size: 0.72rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      .demo-frame {
+        border-radius: 20px;
+        overflow: hidden;
+        background: #102235;
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+        padding: 0.8rem;
+      }
+
+      .demo-frame img {
+        display: block;
+        width: 100%;
+        height: auto;
+        max-width: 100%;
+        border-radius: 12px;
+      }
+
+      .demo-caption {
+        margin: 0.75rem 0 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.6;
+        max-width: 58ch;
+      }
+
+      section {
+        position: relative;
+        margin-top: 1.2rem;
+      }
+
+      .overview-stack::before,
+      .section-grid::before,
+      .footer::before {
+        content: "";
+        position: absolute;
+        inset: auto auto 10% -4%;
+        width: 10rem;
+        height: 10rem;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(244, 165, 177, 0.08), transparent 72%);
+        pointer-events: none;
+        filter: blur(8px);
+      }
+
+      .focus-strip {
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+        align-items: start;
+        padding: 0.35rem 0;
+      }
+
+      .focus-strip::before,
+      .focus-strip::after {
+        content: "";
+        position: absolute;
+        top: 2.5rem;
+        height: 1px;
+        background: rgba(156, 226, 255, 0.28);
+      }
+
+      .focus-strip::before {
+        left: 17%;
+        right: 50%;
+      }
+
+      .focus-strip::after {
+        left: 50%;
+        right: 17%;
+      }
+
+      .focus-strip-arrow-left,
+      .focus-strip-arrow-right {
+        position: absolute;
+        top: calc(2.5rem - 4px);
+        width: 8px;
+        height: 8px;
+        border-top: 1px solid rgba(156, 226, 255, 0.4);
+      }
+
+      .focus-strip-arrow-left {
+        left: calc(50% - 10px);
+        border-right: 1px solid rgba(156, 226, 255, 0.4);
+        transform: rotate(45deg);
+      }
+
+      .focus-strip-arrow-right {
+        left: calc(50% + 2px);
+        border-left: 1px solid rgba(156, 226, 255, 0.4);
+        transform: rotate(-45deg);
+      }
+
+      .focus-card {
+        position: relative;
+        z-index: 1;
+        padding: 0;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        text-align: center;
+      }
+
+      .focus-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 5rem;
+        height: 5rem;
+        margin-bottom: 0.75rem;
+        border-radius: 999px;
+        background: rgba(19, 34, 53, 0.92);
+        border: 1px solid rgba(156, 226, 255, 0.16);
+        box-shadow:
+          0 0 0 8px rgba(156, 226, 255, 0.05),
+          0 16px 30px rgba(0, 0, 0, 0.18);
+      }
+
+      .focus-card:nth-child(1) .focus-icon {
+        color: var(--accent);
+      }
+
+      .focus-card:nth-child(2) .focus-icon {
+        color: #7fd7ff;
+      }
+
+      .focus-card:nth-child(3) .focus-icon {
+        color: #ffbdc4;
+      }
+
+      .focus-icon svg {
+        width: 1.65rem;
+        height: 1.65rem;
+      }
+
+      .focus-card h3 {
+        font-size: 0.98rem;
+        margin-bottom: 0;
+        color: var(--text);
+      }
+
+      .section-card p,
+      .section-card li {
+        color: var(--muted);
+        font-size: 1rem;
+        line-height: 1.75;
+      }
+
+      .section-card p + p {
+        margin-top: 1rem;
+      }
+
+      .section-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 1.25rem;
+      }
+
+      .section-card {
+        padding: 2rem;
+        border-radius: 18px;
+        background: rgba(19, 34, 53, 0.84);
+        border: 1px solid var(--line);
+        box-shadow: 0 8px 20px rgba(17, 42, 77, 0.05);
+      }
+
+      .section-grid .section-card:first-child {
+        border-left: none;
+      }
+
+      .section-grid .section-card:last-child {
+        border-left: none;
+      }
+
+      .section-card h2 {
+        position: relative;
+        z-index: 1;
+        font-size: 1.7rem;
+        margin-bottom: 1rem;
+        letter-spacing: -0.02em;
+      }
+
+      .section-label {
+        font-family: "Figtree", system-ui, sans-serif;
+        position: relative;
+        z-index: 1;
+        margin: 0 0 0.8rem;
+        color: var(--accent-2);
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 1.2rem;
+      }
+
+      .overview-stack {
+        margin-top: 1.25rem;
+      }
+
+      .overview-stack .section-card {
+        border-top: 4px solid rgba(156, 226, 255, 0.5);
+      }
+
+      .overview-copy {
+        max-width: none;
+        position: relative;
+        z-index: 1;
+      }
+
+      .publications-list {
+        margin: 0;
+        padding-left: 1.2rem;
+      }
+
+      .publications-list li {
+        color: var(--muted);
+        font-size: 1rem;
+        line-height: 1.75;
+      }
+
+      .footer {
+        position: relative;
+        margin-top: 2rem;
+        padding: 1.75rem 0 0;
+        border-top: 1px solid rgba(156, 226, 255, 0.12);
+      }
+
+      .footer-logos {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .footer-note {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.65;
+        flex: 1 1 24rem;
+        min-width: 18rem;
+        max-width: 32rem;
+        text-align: right;
+      }
+
+      .footer-logo-group {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+      }
+
+      .footer-logo {
+        display: block;
+        max-height: 62px;
+        width: auto;
+        opacity: 0.92;
+        filter: saturate(0.95) contrast(1.02);
+      }
+
+      .footer-logo-frontier {
+        max-height: 54px;
+      }
+
+      .footer-logo-lux {
+        max-height: 86px;
+      }
+
+      .footer-logo-lockup {
+        width: 320px;
+        max-height: none;
+        margin-right: -24px;
+        margin-top: -12px;
+      }
+
+      @media (max-width: 900px) {
+        .hero-grid,
+        .focus-strip,
+        .section-grid,
+        .overview-copy {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-copy {
+          padding: 0.5rem 0 0;
+        }
+
+        .focus-strip {
+          gap: 1rem;
+        }
+
+        .focus-strip::before,
+        .focus-strip::after,
+        .focus-strip-arrow-left,
+        .focus-strip-arrow-right {
+          display: none;
+        }
+
+        .topbar {
+          padding-bottom: 1rem;
+        }
+
+        .footer-logos {
+          align-items: flex-start;
+        }
+
+        .footer-note {
+          flex: 1 1 100%;
+          min-width: 0;
+          max-width: none;
+          text-align: left;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .page {
+          width: min(100% - 1rem, 1380px);
+        }
+
+        .topbar {
+          flex-direction: column;
+          align-items: flex-start;
+          padding-bottom: 1rem;
+        }
+
+        h1 {
+          font-size: clamp(2.8rem, 13vw, 4.2rem);
+        }
+      }
+    </style>
   </head>
   <body>
-    <h1>Genesis Vista</h1>
-    <p>Organization website coming soon.</p>
+    <div class="page">
+      <header class="hero">
+        <div class="topbar">
+          <img
+            class="brand-logo"
+            src="assets/vista_temp_logo.png"
+            alt="VISTA logo"
+          />
+          <a href="https://github.com/genesis-vista">github.com/genesis-vista</a>
+        </div>
+
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">Research Initiative</p>
+            <h1>VISTA</h1>
+            <p class="subtitle">
+              Visual Intelligence for Scientific &amp; Tooling Assistant (VISTA) is a
+              scientific assistant for molten-salt reactor research, designed
+              to support analysis, interpretation, and scientific judgment
+              across thermophysical, neutronic, and tritium-breeding studies.
+            </p>
+            <p class="subtitle">
+              VISTA is intended to help scientists move from fragmented inputs
+              and post-processing workflows toward more coherent, interpretable
+              research decisions.
+            </p>
+            <div class="hero-actions">
+              <a class="button" href="#overview">Read Overview</a>
+              <a class="button-secondary" href="https://github.com/genesis-vista">Organization Page</a>
+            </div>
+          </div>
+
+          <div class="hero-demo">
+            <p class="demo-label">Interface Demonstration</p>
+            <div class="demo-frame">
+              <img
+                src="assets/project_view.gif"
+                alt="Animated preview of the VISTA interface"
+              />
+            </div>
+            <p class="demo-caption">
+              A preliminary interface view showing how research workflows,
+              project context, and analysis tooling may be brought together in
+              a single environment.
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <section class="focus-strip" aria-label="Core research areas">
+        <span class="focus-strip-arrow-left" aria-hidden="true"></span>
+        <span class="focus-strip-arrow-right" aria-hidden="true"></span>
+        <article class="focus-card">
+          <div class="focus-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M5 16c2.2-4.7 4.8-7 7-7s4.8 2.3 7 7" />
+              <path d="M6 18h12" />
+              <circle cx="12" cy="8" r="2.2" />
+            </svg>
+          </div>
+          <h3>Insight</h3>
+        </article>
+
+        <article class="focus-card">
+          <div class="focus-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M4 18h16" />
+              <path d="M7 18V8l5-3 5 3v10" />
+              <path d="M10 12h4" />
+              <path d="M10 15h4" />
+            </svg>
+          </div>
+          <h3>Intelligence</h3>
+        </article>
+
+        <article class="focus-card">
+          <div class="focus-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M12 4v16" />
+              <path d="M7 8c0-1.7 2.2-3 5-3s5 1.3 5 3-2.2 3-5 3-5 1.3-5 3 2.2 3 5 3 5-1.3 5-3" />
+            </svg>
+          </div>
+          <h3>Integration</h3>
+        </article>
+      </section>
+
+      <section class="overview-stack" id="overview">
+        <article class="section-card">
+          <p class="section-label">Overview</p>
+          <h2>Project Overview</h2>
+          <div class="overview-copy">
+            <p>
+              VISTA is a scientific assistant designed to accelerate
+              molten-salt reactor research by helping users explore
+              thermophysical behavior, interpret neutronics outputs, and
+              assess tritium breeding performance in a unified workflow.
+            </p>
+            <p>
+              It supports phase-diagram interpretation,
+              composition-property analysis, and isotope-resolved
+              post-processing across enrichment and material design spaces.
+            </p>
+            <p>
+              By combining curated data, analysis scripts, and research
+              context, VISTA helps scientists move more efficiently from raw
+              simulation or experimental inputs to defensible engineering
+              insight.
+            </p>
+            <p>
+              The goal is to help scientists spend less time stitching
+              together disconnected outputs and more time generating credible
+              insight from their data.
+            </p>
+          </div>
+        </article>
+      </section>
+
+      <section class="section-grid">
+        <article class="section-card">
+          <p class="section-label">Motivation</p>
+          <h2>Why This Work Matters</h2>
+          <p>
+            Scientific teams often have the data they need, but not a unified
+            assistant that helps them interpret it quickly. VISTA is built to
+            reduce that friction and make advanced reactor analysis more
+            navigable, explainable, and actionable.
+          </p>
+        </article>
+
+        <article class="section-card">
+          <p class="section-label">Workflow</p>
+          <h2>Analytical Capabilities</h2>
+          <ul>
+            <li>Explore thermophysical behavior across salt compositions.</li>
+            <li>Interpret neutronics outputs within a research-ready context.</li>
+            <li>Assess tritium breeding performance across design spaces.</li>
+            <li>Connect analysis, tooling, and domain knowledge in one place.</li>
+          </ul>
+        </article>
+      </section>
+
+      <section>
+        <article class="section-card">
+          <p class="section-label">Published Material</p>
+          <h2>Publications</h2>
+          <ul class="publications-list">
+            <li>TBD</li>
+          </ul>
+        </article>
+      </section>
+
+      <footer class="footer">
+        <div class="footer-logos">
+          <div class="footer-logo-group" aria-label="Affiliated logos">
+            <img
+              class="footer-logo footer-logo-lockup"
+              src="assets/Genesis x AmSC lockup_Stacked_White-lg.png"
+              alt="Genesis and American Science Cloud logo"
+            />
+            <img
+              class="footer-logo footer-logo-frontier"
+              src="assets/FRONTIER_LOGO.webp"
+              alt="Frontier logo"
+            />
+            <img
+              class="footer-logo footer-logo-lux"
+              src="assets/Lux-zoombkgr 1.jpg"
+              alt="Lux logo"
+            />
+          </div>
+          <p class="footer-note">
+            VISTA is presented here as an evolving scientific initiative within
+            the
+            <a href="https://github.com/genesis-vista">Genesis Vista organization</a>.
+          </p>
+        </div>
+      </footer>
+    </div>
   </body>
 </html>
