@@ -10,43 +10,49 @@ Start by opening an existing research project or creating a new one. A project k
 
 Use a clear project name that identifies the experiment, simulation campaign, salt system, or design study.
 
-## 2. Add research context
+### Open an existing project
 
-Provide the information VISTA needs to understand the task. Depending on the workflow, this may include:
+Select **Projects** in the sidebar, find the project you want to use, and select **Open** or **Reopen**.
 
-- Salt composition and relevant units
-- Temperature or operating conditions
-- Simulation or experimental outputs
-- Isotope or enrichment information
-- Assumptions that affect interpretation
+![VISTA Projects page showing available projects and controls for opening an existing project](assets/open-projects.png)
 
-Check all values and units before beginning an analysis.
+*Choose an existing project from the Projects page.*
 
-## 3. Choose an analysis workflow
+### Create a new project
 
-Select the workflow that matches the research question. VISTA is intended to assist with areas such as:
+Select **New project**, enter a name and description, and configure the skills, knowledge bases, and tools the project should use. Select **Create** when the project is ready.
 
-- Thermophysical-property exploration
-- Phase-behavior interpretation
-- Neutronics post-processing
-- Tritium-breeding assessment
-- Composition and material-design comparisons
+![VISTA New Project dialog with fields for project details, skills, knowledge bases, and tools](assets/new-project.png)
 
-## 4. Review the result
+*Configure the project and select Create.*
 
-Review the generated plots, tables, explanations, and supporting context. Confirm that the reported inputs and assumptions match the intended study.
+## 2. Explore the Skill Hub
 
-!!! important "Scientific review is required"
+Select **Skill Hub** in the sidebar to browse the scientific and workflow skills available in VISTA. Each skill gives VISTA specialized instructions and tools for a particular type of task.
 
-    VISTA supports scientific judgment; it does not replace it. Validate important conclusions against source data, established methods, and appropriate subject-matter review.
+Search by skill name or description, filter the catalog by research area, or change the sort order to find a relevant skill. Review the skill description and topic labels to confirm that it matches your research goal.
 
-## 5. Refine the analysis
+Select **Load** to make an optional skill available in the current chat session. Skills marked **Required** are supplied by the open project, while **Loaded** identifies a skill that is already available in the session.
 
-Adjust the inputs, assumptions, or analysis request when a result needs clarification. Keep comparisons within the same project so their context remains easy to follow.
+![VISTA Skill Hub showing searchable and filterable skill cards with Load, Loaded, and Required statuses](assets/skillhub.png)
 
-## 6. Save or export results
+*Browse the Skill Hub and load the skills needed for the current task.*
 
-Save useful outputs with enough context to reproduce the analysis. Record the input data, units, assumptions, workflow, and VISTA version whenever those details are available.
+Use only the skills appropriate for your analysis, and verify their expected inputs, assumptions, and outputs before relying on a result.
+
+## 3. Work with knowledge bases
+
+Select **Knowledge Bases** in the sidebar to browse collections of publications and other reference material available to VISTA.
+
+Choose a knowledge base from the list to review its description, status, and publications. Use the publication search to find an item by title, author, journal, year, DOI, or keyword.
+
+To add source material, drag PDF files into the upload area or select the area to browse for files. Newly added documents become searchable after VISTA finishes indexing them and marks the knowledge base as **Ready**.
+
+![VISTA Knowledge Bases page showing the Molten Salt Papers collection, publication search, PDF upload area, and indexed publications](assets/knowledgebase.png)
+
+*Browse publications or add PDF source material to a knowledge base.*
+
+Use knowledge bases that are relevant to the active project, and verify the original source before relying on retrieved material in a scientific conclusion.
 
 ## Getting help
 
