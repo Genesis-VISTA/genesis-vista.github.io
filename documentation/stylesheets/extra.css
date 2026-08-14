@@ -1,0 +1,18 @@
+:root {
+  --md-primary-fg-color: #132235;
+  --md-primary-fg-color--light: #1b314b;
+  --md-primary-fg-color--dark: #0f1b2b;
+  --md-accent-fg-color: #00608c;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-default-bg-color: #0f1b2b;
+  --md-default-fg-color: #eef4fb;
+  --md-primary-fg-color: #132235;
+  --md-accent-fg-color: #9ce2ff;
+}
+
+.md-header__button.md-logo img {
+  height: 1.8rem;
+  width: auto;
+}

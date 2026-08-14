@@ -1,0 +1,51 @@
+site_name: VISTA Documentation
+site_description: Documentation for the Visual Intelligence for Scientific & Tooling Assistant
+site_url: https://genesis-vista.github.io/docs/
+docs_dir: documentation
+
+theme:
+  name: material
+  features:
+    - navigation.footer
+    - navigation.indexes
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+nav:
+  - How to use VISTA: index.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.superfences
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  homepage: https://genesis-vista.github.io/
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/Genesis-VISTA
+
+copyright: VISTA — an evolving scientific research initiative
