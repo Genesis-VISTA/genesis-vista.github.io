@@ -31,6 +31,8 @@ theme:
 
 nav:
   - How to use VISTA: index.md
+  - Tutorials:
+      - LLM modeling: llm-modeling.md
 
 markdown_extensions:
   - admonition
