@@ -31,6 +31,8 @@ theme:
 
 nav:
   - How to use VISTA: index.md
+  - Tutorials:
+      - Alloy design: alloy-design.md
 
 markdown_extensions:
   - admonition
