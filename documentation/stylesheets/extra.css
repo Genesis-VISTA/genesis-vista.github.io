@@ -5,7 +5,9 @@
   --md-accent-fg-color: #00608c;
   --vista-nav-text: #34465a;
   --vista-nav-hover: #004f75;
-  --vista-nav-active-bg: rgba(0, 96, 140, 0.12);
+  --vista-nav-active: #526d82;
+  --vista-nav-active-bg: rgba(19, 34, 53, 0.065);
+  --vista-nav-tree: rgba(82, 109, 130, 0.3);
 }
 
 [data-md-color-scheme="slate"] {
@@ -15,7 +17,9 @@
   --md-accent-fg-color: #9ce2ff;
   --vista-nav-text: #c2cfdd;
   --vista-nav-hover: #eef4fb;
-  --vista-nav-active-bg: rgba(156, 226, 255, 0.13);
+  --vista-nav-active: #b7c8d6;
+  --vista-nav-active-bg: rgba(238, 244, 251, 0.065);
+  --vista-nav-tree: rgba(183, 200, 214, 0.25);
 }
 
 .md-header__button.md-logo img {
@@ -38,8 +42,50 @@
 }
 
 .md-sidebar--primary .md-nav__link--active {
-  color: var(--md-accent-fg-color);
+  color: var(--vista-nav-active);
   background-color: var(--vista-nav-active-bg);
-  box-shadow: inset 0.15rem 0 var(--md-accent-fg-color);
-  font-weight: 700;
+  box-shadow: inset 0.1rem 0 var(--vista-nav-active);
+  font-weight: 600;
+}
+
+/* Give the primary navigation a clear category → page tree hierarchy. */
+.md-nav--primary > .md-nav__list > .md-nav__item > .md-nav__link {
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.md-nav--primary
+  > .md-nav__list
+  > .md-nav__item
+  > .md-nav
+  > .md-nav__list {
+  margin-left: 0.65rem;
+  padding-left: 0.55rem;
+  border-left: 1px solid var(--vista-nav-tree);
+}
+
+.md-nav--primary
+  > .md-nav__list
+  > .md-nav__item
+  > .md-nav
+  > .md-nav__list
+  > .md-nav__item
+  > .md-nav__link {
+  font-size: 0.67rem;
+}
+
+/* Use the available desktop width so the category sidebar sits near the edge. */
+@media screen and (min-width: 60em) {
+  .md-main__inner.md-grid {
+    max-width: none;
+    margin-left: 1.25rem;
+    margin-right: 1.25rem;
+  }
+
+  .md-content__inner {
+    max-width: 48rem;
+    margin-left: auto;
+    margin-right: auto;
+  }
 }
