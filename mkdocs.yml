@@ -33,6 +33,7 @@ nav:
   - How to use VISTA: index.md
   - Tutorials:
       - LLM modeling: llm-modeling.md
+      - Alloy design: alloy-design.md
 
 markdown_extensions:
   - admonition
