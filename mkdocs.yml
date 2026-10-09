@@ -30,6 +30,7 @@ theme:
         name: Switch to light mode
 
 nav:
+  - Quick Start Guide: quick-start.md
   - How to use VISTA: index.md
   - Tutorials:
       - LLM modeling: llm-modeling.md
