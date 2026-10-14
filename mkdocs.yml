@@ -35,6 +35,7 @@ nav:
   - Tutorials:
       - LLM modeling: llm-modeling.md
       - Alloy design: alloy-design.md
+      - Create your own ModSim skill: modsim-skill.md
 
 markdown_extensions:
   - admonition
