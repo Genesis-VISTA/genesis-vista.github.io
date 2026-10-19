@@ -37,6 +37,7 @@ nav:
       - Alloy design: alloy-design.md
       - Create your own ModSim skill: modsim-skill.md
       - Lux skills: lux-llm.md
+      - Connect VISTA with your personal agent: personal-agent.md
 
 markdown_extensions:
   - admonition
