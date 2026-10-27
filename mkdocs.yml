@@ -38,6 +38,15 @@ nav:
       - Create your own ModSim skill: modsim-skill.md
       - Lux skills: lux-llm.md
 
+validation:
+  anchors: warn
+
+# The Reference and Developers sections are added by VISTA's
+# scripts/docs_site/sync_docs.py from its docs/site.toml, into
+# mkdocs.generated.yml, which is what the workflow builds. VISTA's
+# scripts/docs_site/mkdocs.yml mirrors this file's theme and markdown_extensions,
+# so keep them in step:
+# https://github.com/Genesis-VISTA/vista/blob/main/scripts/docs_site/mkdocs.yml
 markdown_extensions:
   - admonition
   - attr_list

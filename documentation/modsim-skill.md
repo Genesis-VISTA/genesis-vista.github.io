@@ -73,7 +73,7 @@ example `my-skill/my-job`. Five rules cover almost everything:
   ignored.
 
 The full contract is the **Self-contained HPC skills** section of VISTA's
-[HPC jobs guide](https://github.com/Genesis-VISTA/vista/blob/main/docs/hpc-jobs.md#self-contained-hpc-skills).
+[HPC jobs guide](reference/hpc-jobs.md#self-contained-hpc-skills).
 
 ## Path 1. Bring your own skill
 
@@ -354,8 +354,8 @@ VISTA fetches the output and counts the `Hello from MPI rank N !` lines.
 ## Getting help
 
 The full job contract, including every cluster's settings, is in VISTA's
-[HPC jobs guide](https://github.com/Genesis-VISTA/vista/blob/main/docs/hpc-jobs.md#self-contained-hpc-skills),
+[HPC jobs guide](reference/hpc-jobs.md#self-contained-hpc-skills),
 and the import paths are in its
-[skill onboarding guide](https://github.com/Genesis-VISTA/vista/blob/main/docs/skill-onboarding.md).
+[skill onboarding guide](reference/skill-onboarding.md).
 
 [Return to the VISTA homepage](https://genesis-vista.github.io/){ .md-button }
