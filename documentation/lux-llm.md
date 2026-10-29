@@ -1,28 +1,24 @@
-# Lux LLM training and inference
+# Lux LLM training, post-training, serving and agents
 
-This tutorial trains and serves large language models on **Lux**, the OLCF cluster
-with 8 AMD Instinct MI355X GPUs (288 GB each) per node. It has two parts, each built on
-a skill:
+This tutorial follows an LLM from training to scientific agents on **Lux**, the OLCF
+cluster with 8 AMD Instinct MI355X GPUs (288 GB each) per node. Four skills in the
+[central Lux Skills repository](https://github.com/Genesis-VISTA/lux-skills) cover the stages:
 
-| Skill | Repository | What it does |
+| Stage | Skill | What it does |
 |---|---|---|
-| `primus-on-lux` | [lux-primus-skill](https://github.com/jqyin/lux-primus-skill) | trains LLMs with AMD Primus (Megatron backend): a Mistral-7B smoke test, and continued pretraining of the full **Mistral-Large-Instruct-2411 (123B)** on scientific text |
-| `vllm-on-lux` | [lux-vllm-skill](https://github.com/jqyin/lux-vllm-skill) | serves a model with vLLM as an OpenAI-compatible endpoint (by default **Inkling-MXFP4** on 2 nodes with a 1M-token context) and scores it on a physics, chemistry and materials-science benchmark suite |
+| 1. Continued pretraining | [`primus-skill`](https://github.com/Genesis-VISTA/lux-skills/tree/main/skills/primus-skill) | Adapts **Mistral-Large-Instruct-2411 (123B)** to scientific text with AMD Primus; includes a Mistral-7B smoke test. |
+| 2. RL post-training | [`verl-grpo-skill`](https://github.com/Genesis-VISTA/lux-skills/tree/main/skills/verl-grpo-skill) | Trains the 123B model with GRPO and a verifiable science-answer reward. |
+| 3. Model serving | [`vllm-skill`](https://github.com/Genesis-VISTA/lux-skills/tree/main/skills/vllm-skill) | Serves an OpenAI-compatible endpoint and runs science benchmarks; the ready-to-run example serves Inkling-MXFP4. |
+| 4. Scientific agents | [`autogen-skill`](https://github.com/Genesis-VISTA/lux-skills/tree/main/skills/autogen-skill) | Runs four AutoGen agents that optimize an ICF capsule against a vLLM endpoint, or serves gpt-oss-20b in the job. |
 
-Each skill is a repository you can use two ways:
+Import the repository **once** in VISTA before starting any stage. For a hand run,
+clone it once and use the wrappers in `skills/<skill>/`. Both routes submit Lux jobs
+and read their results. The examples below are measured Lux runs from October 2026.
 
-- **From VISTA.** Import the skill into a project, then ask for a run in the chat
-  panel. VISTA submits the skill's HPC job to Lux and reads the results back. Each
-  part ends with a **Run it from VISTA** section.
-- **By hand**, with the shell wrappers in each repository, from a Lux login node.
-  Most of this page shows those commands, because they make each step visible.
-
-Both ways run the same job scripts on Lux. Every example output below comes from a real
-run of these repositories on Lux in October 2026, so you know what a healthy run looks
-like.
-
-The two parts are independent. Run either one alone, or train in part 1 and serve the
-result in part 2.
+The stages form a workflow, but their ready-to-run examples are separate experiments:
+GRPO starts from the shared original Mistral 123B model, not automatically from a
+Primus CPT checkpoint; the serving and agent examples use Inkling unless you select
+another endpoint. Sections 2 and 3 explain how to use and evaluate your own checkpoints.
 
 ## Before you start
 
@@ -36,42 +32,54 @@ You need:
   skills into. [Create your own ModSim skill](modsim-skill.md#what-a-modsim-skill-is)
   explains how imported skills run jobs.
 - **To run by hand:** a shell on the Lux login node, `login1.lux.olcf.ornl.gov`.
-- **Nothing to download.** The models, containers and datasets are in a shared,
-  read-only package that both skills read in place:
+- **Nothing to download for the default runs.** The models, containers and datasets
+  are in a shared package that the skills read in place:
 
 | `/lustre/orion/world-shared/stf218/junqi/Genesis-Hackathon/...` | Used by | Size |
 |---|---|---|
-| `models/Inkling-MXFP4/` | inference | 517 GB |
-| `containers/inference_image_gfx950_v8mi250_20261011.tar` | inference (podman image) | 56 GB |
-| `datasets/benchmarks/science/` | inference (GPQA Diamond, MaScQA, MMLU-Pro) | 28 MB |
-| `models/mistral_large_megatron_tp1pp8/` | training (Megatron checkpoint, the starting point) | 448 GB |
-| `models/Mistral-Large-Instruct-2411/` | training (tokenizer, export reference) | 224 GB |
-| `datasets/scibase_*`, `datasets/chatmix_v7/` | training (34B tokens of Sci-Base, 1.98M chat conversations) | |
-| `containers/primus_v26.5.sif` | training (apptainer image) | |
+| `models/mistral_large_megatron_tp1pp8/` | Primus CPT starting checkpoint | 448 GB |
+| `models/Mistral-Large-Instruct-2411/` | Mistral 123B HF starting model for GRPO; CPT tokenizer and export reference | 224 GB |
+| `datasets/scibase_*`, `datasets/chatmix_v7/` | CPT (34B Sci-Base tokens, 1.98M chat conversations) | |
+| `containers/primus_v26.5.sif` | CPT image (apptainer) | |
+| `containers/verl_v26.8A.sif` | GRPO image (apptainer) | about 12 GB |
+| `datasets/sci_rl/{rl_control,rl_pubonly,sci_dev}.parquet` | GRPO training and dev data | 41,091 / 41,091 / 1,200 rows |
+| `models/Inkling-MXFP4/` | default vLLM serving | 517 GB |
+| `models/gptoss-20b-hedp.03302026/` | agents with `BACKEND=self` | 39 GB |
+| `containers/inference_image_gfx950_v8mi250_20261011.tar` | serving and benchmark image (podman) | 56 GB |
+| `datasets/benchmarks/science/` | GPQA Diamond, MaScQA, MMLU-Pro evaluation | 28 MB |
 
-`MANIFEST.sha256` in the same directory checksums every file.
+`MANIFEST.sha256` checks the package's original assets. The added GRPO image
+and prepared parquets were compared with the source package when copied.
 
-**To use VISTA,** import both skills into your project. On the **Skills** page, select
-**Import…** → **GitHub URL**, paste `https://github.com/jqyin/lux-primus-skill`, and
-select **Import**. Then do the same for `https://github.com/jqyin/lux-vllm-skill`. The
-cards show **Runs HPC jobs: primus-on-lux/mistral-cpt, primus-on-lux/primus-smoke** and
-**Runs HPC jobs: vllm-on-lux/vllm-serve**.
+**To use VISTA,** open your project, select **Skills** → **Import…** →
+**Repository**, and enter `https://github.com/Genesis-VISTA/lux-skills` as the
+repository URL. VISTA lists the skills it finds. Select `primus-skill`,
+`verl-grpo-skill`, `vllm-skill` and `autogen-skill`, then select
+**Import 4 skills**. The repository also contains `parallel-attention-skill`,
+which this tutorial does not use. Check the four imported cards for the jobs
+named in each part below.
 
-**To run by hand,** clone both repositories somewhere on Lustre:
+![VISTA Repository import dialog with the Lux Skills URL and the four tutorial skills selected for one import](assets/import-skills.png)
+
+If VISTA says a skill name is taken, resolve that choice before importing.
+Importing under another name changes the `<skill>/<job>` identifier used in
+the examples below.
+
+**To run by hand,** clone the repository once on Lustre:
 
 ```bash
 cd /lustre/orion/<proj>/scratch/$USER
-git clone https://github.com/jqyin/lux-primus-skill
-git clone https://github.com/jqyin/lux-vllm-skill
+git clone https://github.com/Genesis-VISTA/lux-skills
+export LUX_SKILLS="$PWD/lux-skills"
 ```
 
 !!! note "These jobs take real time"
-    The 123B training test holds 4 nodes for about 8 minutes, and the inference
-    benchmark holds 2 nodes for about an hour. Both come after however long the job
-    waits in the queue (`squeue -u $USER`). Submitting returns at once, so you do not
-    have to keep the shell or the conversation open.
+    The CPT test holds 4 nodes for about 8 minutes of job time; the GRPO smoke test
+    uses 8 nodes and has taken 23 minutes in a healthy run; the Inkling benchmark
+    holds 2 nodes for about an hour. Queue time comes first (`squeue -u $USER`).
+    Submitting returns at once, so you need not keep the shell or conversation open.
 
-## Part 1. Train an LLM with `lux-primus-skill`
+## Part 1. Continue pretraining with `primus-skill`
 
 Primus is AMD's training framework for Instinct GPUs. Here it runs Megatron-LM inside an
 apptainer container across nodes. The skill wraps two workloads: a quick Mistral-7B
@@ -79,7 +87,7 @@ smoke test, and continued pretraining (CPT) of Mistral-Large-123B, adapted from 
 3 of the Lux AI-for-Science hackathon.
 
 ```bash
-cd lux-primus-skill
+cd "$LUX_SKILLS/skills/primus-skill"
 source env.lux.sh            # account, image, shared package, proxy, network interface
 ```
 
@@ -191,8 +199,8 @@ scripts/run_cpt.sh 256 TRAIN_GBS=32768 TRAIN_ITERS=283 TRAIN_WARMUP=50 TRAIN_EVA
 ```
 
 The global batch must divide by the node count, and the wrapper refuses one that
-doesn't. To serve a trained model in part 2, export its checkpoint to Hugging Face
-format first, which takes about an hour on one node:
+doesn't. To use a CPT checkpoint in a later stage, export it to Hugging Face format
+first, which takes about an hour on one node:
 
 ```bash
 scripts/export_cpt.sh <checkpoints dir> "<iters>" [out]
@@ -203,14 +211,14 @@ held-out loss. It fails if any check fails.
 
 ### 1.3 Run it from VISTA
 
-The `primus-on-lux` skill ships two VISTA jobs, `primus-smoke` (section 1.1) and
+The `primus-skill` has two VISTA jobs, `primus-smoke` (section 1.1) and
 `mistral-cpt` (section 1.2). In the chat panel:
 
 ```
 run the Mistral-Large 123B continued pretraining on Lux for 10 iterations. Confirm with me before submitting.
 ```
 
-VISTA proposes the submission: job `primus-on-lux/mistral-cpt`, cluster `lux`, 4 nodes,
+VISTA proposes the submission: job `primus-skill/mistral-cpt`, cluster `lux`, 4 nodes,
 45 minutes, `script_args="TRAIN_ITERS=10"`. Reply **yes**, or change it first. Two login
 prompts follow, as in the [LLM modeling](llm-modeling.md#logging-in-to-lux) tutorial.
 The arguments the job accepts are:
@@ -260,7 +268,107 @@ Iterations 3 to 10 all took 38.2-38.4 s at about 1,300 TFLOP/s/GPU, and the job 
     - **Exporting a checkpoint is not a VISTA job yet.** Run `scripts/export_cpt.sh` by
       hand.
 
-## Part 2. Serve and benchmark with `lux-vllm-skill`
+## Part 2. RL post-training with `verl-grpo-skill`
+
+The next stage teaches **Mistral-Large-Instruct-2411 (123B)** to solve science
+questions with a checkable final answer. The [verl GRPO skill](https://github.com/Genesis-VISTA/lux-skills/tree/main/skills/verl-grpo-skill)
+uses vLLM to generate eight answers per prompt, a custom reward to check each final
+answer, and Megatron-Core to update the policy using group-relative advantages.
+`control` trains on the prepared `rl_control.parquet` pool; `pubonly` replaces its
+Sci-Base questions with public questions. The held-out dev set is separate.
+
+The default starts from the shared **original** Mistral HF model. If you want the
+model from part 1 to continue into GRPO, export that CPT checkpoint to HF format,
+then follow the skill's [asset overrides](https://github.com/Genesis-VISTA/lux-skills/blob/main/skills/verl-grpo-skill/references/build-your-own.md)
+to point `RL_MODEL` at it. The prepared pool was scored with the original model,
+so a CPT-to-GRPO experiment needs fresh rollout/pass-rate checks and compatible
+tokenizer and conversion settings. That exact handoff has not been validated by
+the smoke results below.
+
+### 2.1 Smoke test on eight nodes
+
+On a Lux login node, after cloning the central repository:
+
+```bash
+cd "$LUX_SKILLS/skills/verl-grpo-skill"
+source env.lux.sh             # ACCOUNT, shared PKG and your WORKDIR
+scripts/setup.sh              # copy the small tutorial work tree; read large inputs in place
+scripts/train.sh smoke        # 8 nodes, 3 GRPO steps, no checkpoint or validation
+# After the job finishes, inspect $WORKDIR/logs/verl/slurm-rl-smoke_<jobid>.out
+```
+
+The shared `PKG` defaults to
+`/lustre/orion/world-shared/stf218/junqi/Genesis-Hackathon`; it supplies the
+verl image, 123B HF weights, science parquets and tutorial code. The skill's
+[build guide](https://github.com/Genesis-VISTA/lux-skills/blob/main/skills/verl-grpo-skill/references/build-your-own.md)
+also shows how to make your own image, model and data.
+
+**Measured Lux baseline** from the skill's
+[run record](https://github.com/Genesis-VISTA/lux-skills/blob/main/skills/verl-grpo-skill/results/lux-8node-2026-10-27.md):
+
+| Run | Nodes / GPUs | Job time | Last step | Last training reward |
+|---|---:|---:|---:|---:|
+| Three-step smoke, job 368799 | 8 / 64 | 22:48 | 3 | 0.567871 |
+| Ten-step check, job 368812 | 8 / 64 | 41:21 | 10 | 0.613037 |
+
+Both jobs exited 0. They used the original tutorial package; the skill's
+Genesis-Hackathon image and prepared data were copied and compared with those
+inputs. They made no checkpoint or held-out evaluation. The reported reward is
+the **training batch's** verifiable score, so three or ten steps cannot establish
+an accuracy improvement. Model loading can stall; the skill documents a
+90-minute distributed timeout and a longer Slurm limit for that case.
+
+### 2.2 Checkpointed training and evaluation
+
+For a hand-run study, `scripts/train.sh control` trains 125 steps and normally
+saves and validates every 25. The `pubonly` arm uses `scripts/train.sh pubonly`.
+Keep different run names for the two arms so one cannot resume the other's
+checkpoint. At eight nodes, the full run is estimated at 7–9 hours from the
+smoke timing. Each optimizer checkpoint is about **1.6 TB**, with up to about
+5 TB of scratch space needed during a save.
+
+```bash
+scripts/train.sh control
+scripts/eval.sh rl_control 125 Mistral-Large-Instruct-2411  # after step 125
+export GRPO_HF_PARENT="$WORKDIR/hf"
+```
+
+`eval.sh` makes a vLLM-readable HF directory from the GRPO checkpoint and runs
+the science benchmark. The optional third argument gives the output directory
+the name expected by the hand-run vLLM wrapper:
+`$GRPO_HF_PARENT/Mistral-Large-Instruct-2411/`. Compare the held-out
+`science.txt` aggregate with the starting model, then use that HF directory
+for serving in part 3. For a VISTA training checkpoint, set `WORKDIR` to the
+shared work path reported in `summary.txt` before running `scripts/eval.sh`
+on a Lux login node. The tutorial's
+separate 32-node, 125-step control reference improved the science-suite mean
+from 0.666 to 0.739; the skill's eight-node runs above are only short checks.
+
+### 2.3 Run it from VISTA
+
+The repository import at the start of this page already loaded
+`verl-grpo-skill/grpo-train`. Ask in the chat panel:
+
+```text
+Run the three-step Mistral 123B GRPO smoke test with verl-grpo-skill on Lux. Show me summary.txt and the last training step when it finishes. Confirm with me before submitting.
+```
+
+VISTA proposes eight exclusive nodes, 64 GPUs and a 2.5-hour wall limit
+(`MODE=smoke TARGET_STEP=3` by default). The longer limit allows for slow
+weight loading. Read `summary.txt` for `VERDICT: OK`, the last step and
+reward; `train.log` has the full Ray/verl trace. To repeat the measured
+ten-step check, use `MODE=smoke TARGET_STEP=10`.
+
+For a checkpointed VISTA study, submit `MODE=control TARGET_STEP=25`, then
+50, 75, 100 and 125 **in order**, with the same `RUN_NAME` and shared VISTA
+job folder. Request about three hours for each eight-node segment; VISTA caps
+each job at four hours. Check `summary.txt` for `VERDICT: OK` and the
+checkpoint path before advancing. The first 25→50 resume should be verified
+on Lux before relying on the whole chain. `pubonly` uses its own run name.
+For exact argument rules and output paths, see the
+[GRPO job README](https://github.com/Genesis-VISTA/lux-skills/blob/main/skills/verl-grpo-skill/hpc_jobs/grpo-train/README.md).
+
+## Part 3. Serve and benchmark with `vllm-skill`
 
 vLLM serves a model as an OpenAI-compatible HTTP endpoint that any client or agent
 framework can call. The skill runs AMD's Lux-validated vLLM image in rootless podman. By
@@ -268,12 +376,12 @@ default it serves **Inkling-MXFP4** on 2 nodes (16 GPUs, TP8 × PP2) with a
 **1,048,576-token context**, with reasoning and tool calls on.
 
 ```bash
-cd lux-vllm-skill
+cd "$LUX_SKILLS/skills/vllm-skill"
 source env.lux.sh            # account, shared package, model and image paths
 scripts/setup.sh             # preflight only, changes nothing (seconds)
 ```
 
-### 2.1 Start a server
+### 3.1 Start a server
 
 ```bash
 scripts/serve.sh                                      # 2 nodes; job "inkling.serve", up in ~11-14 min (up to ~25)
@@ -300,7 +408,7 @@ tensor-parallel all-reduce reached 2,853 Gbps bus bandwidth and the pipeline han
 2,919 Gbps, about 91% of line rate. If you see `FABRIC CHECK FAILED`, resubmit with
 `SBATCH_ARGS=--exclude=<nodes>`.
 
-### 2.2 Query the endpoint
+### 3.2 Query the endpoint
 
 Use any OpenAI client with model `Inkling-MXFP4`. From the login node, run `unset
 http_proxy https_proxy` first if your shell sets them.
@@ -318,7 +426,7 @@ The model thinks before it answers, about 2,300 tokens on average for an MMLU-Pr
 question. Leave room for it in `max_tokens`. A reply cut off mid-thought comes back with
 `content: null`.
 
-### 2.3 Run the science benchmark
+### 3.3 Run the science benchmark
 
 ```bash
 scripts/bench.sh                                     # its own 2 nodes: serve, run the suite, exit
@@ -350,9 +458,10 @@ suite score 0.887 (mean of 3 benchmark accuracies), 2325.8 s
 ```
 
 The full suite took 38 minutes at 256 concurrent requests. For comparison,
-Mistral-Large-Instruct-2411 scores **0.662** on the same suite (GPQA 0.531, MaScQA
-0.779, MMLU-Pro 0.676), which is the baseline for a model trained in part 1. The
-280-question MMLU-Pro subset scored 0.875 in 6 minutes.
+The original Mistral-Large-Instruct-2411 scores **0.662** on the same suite
+(GPQA 0.531, MaScQA 0.779, MMLU-Pro 0.676). Use that as the reference for
+Mistral CPT or GRPO checkpoints, while comparing the same benchmark settings.
+The 280-question MMLU-Pro subset scored 0.875 in 6 minutes for Inkling.
 
 **Long context** (`needle`): the server found a planted fact at 10%, 50% and 90% depth in
 all 15 prompts, from 32k to 1.04M tokens:
@@ -364,7 +473,7 @@ all 15 prompts, from 32k to 1.04M tokens:
 | 512k | 20 s | 26k tok/s | 29 tok/s |
 | 1.04M | 64 s | 16k tok/s | 17 tok/s |
 
-### 2.4 Throughput and choosing a configuration
+### 3.4 Throughput and choosing a configuration
 
 AMD measured serving throughput when validating the same image and engine on Lux
 (8k-token prompts, 1k-token replies, reasoning on, output tokens per second):
@@ -384,24 +493,46 @@ AMD measured serving throughput when validating the same image and engine on Lux
   leave it off for shared servers and for benchmarks.
 - **`scripts/serve.sh 1`** for the best per-GPU efficiency, with a 100k-token context.
 
-### 2.5 Serve a model you trained
+### 3.5 Serve or score a model you trained
 
-To score a model exported in part 1, serve it with
-`hpc_jobs/vllm-serve/lux-inference/bench/mistral/mistral_bench.slurm.sh`, setting `ZENITH_MODELPATH=<export
-dir>` and `ML_MODEL=iter_NNNNNNN`. It runs the correctness probe, a tool-calling check,
-GSM8K and the science suite. Compare against the base model's 0.662 (±0.027). A 4-step
-run will not move that score.
+A Primus CPT checkpoint first needs the part 1 HF export. A GRPO checkpoint needs
+the part 2 `scripts/eval.sh` conversion, which also submits the one-node
+Mistral science benchmark. Both routes produce HF weights that vLLM can read.
+Compare their held-out science scores with the original Mistral's 0.662; a
+four-step CPT or three-step GRPO smoke run is a systems check, not an expected
+quality gain.
 
-### 2.6 Run it from VISTA
+For the GRPO directory prepared in part 2, the hand-run wrapper can serve
+those weights on one node. Keep `GRPO_HF_PARENT` set (or set it to your HF
+directory's parent in a new shell):
 
-The `vllm-on-lux` skill ships one VISTA job, `vllm-serve`. It either serves a model until
+```bash
+cd "$LUX_SKILLS/skills/vllm-skill"
+LUX_MODELPATH="$GRPO_HF_PARENT" scripts/serve.sh 1 LUX_MODEL=Mistral-Large-Instruct-2411
+export GRPO_URL=$(scripts/endpoint.sh | tail -1)
+```
+
+The launcher still names this Slurm job `inkling.serve` by default, but the
+endpoint's model is the Mistral checkpoint in `GRPO_HF_PARENT`. Give
+`GRPO_URL` to the agents in part 4. This trained-model serving path is an
+instructional handoff; the measured serving and agent examples on this page
+used Inkling. The bundled `vllm-skill/inkling-serve` VISTA job accepts
+`MODEL=Mistral-Large-Instruct-2411` but no arbitrary checkpoint path through
+`script_args`; use a suitable `LUX_MODELPATH` job environment override for
+VISTA, or the hand-run wrapper above. Read the
+[vLLM skill](https://github.com/Genesis-VISTA/lux-skills/blob/main/skills/vllm-skill/SKILL.md)
+for model path and benchmark options.
+
+### 3.6 Run it from VISTA
+
+The `vllm-skill` has the `inkling-serve` VISTA job. It either serves a model until
 its time limit, or serves it, runs benchmarks and exits. In the chat panel:
 
 ```
-run the science benchmark on Inkling with vllm-on-lux on Lux. Confirm with me before submitting.
+run the science benchmark on Inkling with vllm-skill on Lux. Confirm with me before submitting.
 ```
 
-VISTA proposes job `vllm-on-lux/vllm-serve`, cluster `lux`, 2 nodes, 2 hours,
+VISTA proposes job `vllm-skill/inkling-serve`, cluster `lux`, 2 nodes, 2 hours,
 `script_args="BENCH=science"`. The arguments are:
 
 | Argument | Default | Notes |
@@ -437,45 +568,116 @@ This start took 25 minutes because loading the weights from Lustre was slow that
 - **A serve job ends at its time limit,** at most 4 hours through VISTA, and Slurm then
   reports it as TIMEOUT. That is its normal end. A benchmark job exits by itself.
 - **The endpoint is reachable only from inside Lux.** Use the URL in `endpoint.txt` from
-  agents or clients running on Lux, for example as `INKLING_URL` for tutorial 1's agents.
+  agents or clients running on Lux, for example as `ENDPOINT` for the part 4 agents.
   VISTA itself cannot call it.
 - **Keep GPQA private.** Ask for `science.txt`, never `science.json`.
 
+## Part 4. Multi-agent science with `autogen-skill`
+
+The `autogen-skill` runs an AutoGen multi-agent scientific workflow against an LLM
+endpoint. The agents design a fusion capsule for inertial confinement fusion (ICF), and
+they share one group chat:
+
+- a **Principal Investigator** plans the campaign and decides when it is done;
+- a **Design Explorer** proposes capsule designs within the laser's energy budget;
+- a **Defect Adversary** attacks each design with drive asymmetry and surface roughness;
+- an **execution proxy** runs each proposal through a fast 0D implosion model, served
+  over MCP.
+
+They look for the design with the best *worst-case* yield under the adversary's
+defects. Each job runs one campaign or a sweep over laser energies, renders the best
+design's implosion movie, has the PI write a debrief, and exits.
+
+The default LLM is the Inkling server from part 3. To drive the agents with
+your own CPT or GRPO model, serve its HF weights as an OpenAI-compatible
+endpoint on Lux and pass that URL as `ENDPOINT`. The agent app discovers the
+model name from the endpoint's `/models` response. The job can also serve
+gpt-oss-20b on its own node with `BACKEND=self`.
+
+```bash
+cd "$LUX_SKILLS/skills/autogen-skill"
+scripts/setup.sh                       # preflight (seconds); the first job builds the app's venv (~20 s)
+scripts/campaign.sh                    # 3 MJ campaign against your running inkling.serve job
+scripts/campaign.sh SWEEP_MJ=2:4:1     # one campaign per laser energy
+scripts/campaign.sh ENDPOINT="$GRPO_URL" # use the trained Mistral endpoint from part 3
+scripts/campaign.sh BACKEND=self       # no server needed: gpt-oss-20b on one exclusive node
+```
+
+**Example `summary.txt`** (job 338441, Inkling-MXFP4, `SWEEP_MJ=2:4:1`, 33 minutes):
+
+```text
+laser MJ   no defects MJ   worst case MJ (robust)
+    2.00            5.13   4.34
+    3.00            8.48   7.32
+    4.00           12.58   10.88
+best robust design: 10.88 MJ at 4 MJ laser
+best design: R0=0.00013, v0=-4.8e+05, T0=2.5, M_sh=5.21e-07, M_hs=9e-09
+simulations: 111; mean yield 3.37 +- 3.67 MJ
+files: implosion.gif implosion.mp4 time_histories.png yield_vs_laser.png
+=== CAMPAIGN OK
+```
+
+A single 3 MJ campaign took 7 minutes with Inkling. With gpt-oss-20b served in the job,
+it took 3 minutes, plus 4 minutes for vLLM to start. The agents run at temperature 1.0,
+so designs and yields vary from run to run. Read `transcript.md` to see how the agents
+got there, and `debrief.md` for the PI's analysis. The physics model is a teaching
+surrogate, not a design code.
+
+### 4.1 Run it from VISTA
+
+The `autogen-skill/icf-campaign` job is already available from the repository
+import. With a `vllm-skill/inkling-serve` job running:
+
+```
+run an ICF laser-energy sweep from 2 to 4 MJ with autogen-skill on Lux, and show me the movie. Confirm with me before submitting.
+```
+
+VISTA proposes job `autogen-skill/icf-campaign`, cluster `lux`, 1 whole node (8 GPUs,
+exclusive), `script_args="SWEEP_MJ=2:4:1"`. The job finds your newest running
+Inkling server job, or takes `SERVE_JOB=<id>`. For your own trained model,
+pass `ENDPOINT=http://<head>:8000/v1` instead. For `BACKEND=self`, ask for
+2 hours. Ask for `implosion.gif` to see the movie in the chat. It
+is the same movie as `implosion.mp4`.
+
 ## What to be careful about
 
-- **Check what VISTA proposes before saying yes.** These jobs hold 2 to 4 whole nodes;
-  confirm the job, node count, duration and arguments.
-- **Use the shared package as is.** It is read-only and checksummed. Point
-  `LUX_MODELPATH`, `CPT_SIF` or `PKG` at your own copies only when you need different
-  files.
-- **A knob must be passed as `KEY=VAL` to the wrapper.** A variable set in your shell
-  but not passed through is silently ignored: the job runs with the default and the log
-  looks normal. Check the values the launcher prints before trusting a run.
+- **Check what VISTA proposes before saying yes.** The default jobs use 1, 2, 4
+  or 8 whole nodes; longer GRPO studies may use 32. Check the node count,
+  duration and arguments.
+- **Use the shared package for the default runs.** Set `LUX_MODELPATH`,
+  `CPT_SIF`, `RL_MODEL`, `RL_DATA` or `PKG` only when using your own assets.
+- **Check each skill's accepted arguments.** The hand-run wrappers and VISTA
+  jobs forward different settings; verify the values printed by the launcher
+  before interpreting a run.
 - **Do not run the full benchmark against a shared server.** At 256 concurrent requests
   it slows everyone else on it. Use `bench.sh`, which gets its own nodes, or
   `--concurrency 32`.
 - **Keep GPQA private.** `science*.json` holds every question and reply. Share
   `science.txt` only.
-- **Checkpoints are large.** A 123B checkpoint is 224 GB. Turn on `SAVE_INTERVAL` only
-  when you need one.
+- **Checkpoints are large.** A CPT checkpoint is about 224 GB; a GRPO
+  checkpoint with optimizer state is about 1.6 TB. Budget scratch space
+  before enabling saves.
 
 ## License and acknowledgments
 
-Both skills are adapted from AMD's work. **Primus**, the `rocm/primus` image and the
-Mistral-Large-123B recipe (FP8 configuration, TP1 × PP8 layout, launch, preflight and
-export scripts, and the reference numbers) are AMD's. The inference engine, its image,
-vLLM patches, RCCL network fix, tuned kernels and benchmark clients come from AMD's
-Zenith inference package. The Lux adaptation was done at the Oak Ridge Leadership
-Computing Facility.
+The [Lux Skills attribution](https://github.com/Genesis-VISTA/lux-skills/blob/main/skills/ATTRIBUTION.md)
+records each skill's sources. The Primus recipe and its reference numbers come
+from AMD. The inference engine, image, vLLM patches and benchmark clients come
+from AMD's Zenith package. The GRPO skill wraps tutorial 4's verl driver,
+science reward and prepared data; its wrappers and documentation are original
+to the central repository. The AutoGen skill adapts the ICF agent workflow.
+The Lux adaptation was done at the Oak Ridge Leadership Computing Facility.
 
-The skills' own code is licensed under Apache-2.0. The AMD components, the models
-(Inkling under Apache-2.0, Mistral-Large under the Mistral Research License) and the
-benchmarks (GPQA CC BY 4.0, MaScQA CC BY-NC-SA 4.0, MMLU-Pro MIT) keep their own terms.
-See each repository's `LICENSE` and acknowledgments.
+The skills' own wrappers are Apache-2.0. Upstream components, models and data
+keep their own terms: Mistral-Large and its derivatives use the Mistral Research
+Licence; Inkling is Apache-2.0; the science datasets include non-commercial
+terms. See the central repository's `NOTICE` and `skills/ATTRIBUTION.md`,
+and tutorial 4's data attribution before redistributing model or dataset files.
 
 ## Getting help
 
-Each repository's `SKILL.md` covers every knob, failure signature and gotcha in
-detail. Start there when a job behaves differently from the examples on this page.
+Each skill's `SKILL.md` covers its settings, failure signatures and result
+interpretation. Start there when a job behaves differently from the examples
+on this page.
 
 [Return to the VISTA homepage](https://genesis-vista.github.io/){ .md-button }
