@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  # Picks up a new VISTA release's docs within a day.
+  schedule:
+    - cron: "0 6 * * *"
 
 permissions:
   contents: read
@@ -30,13 +33,35 @@ jobs:
       - name: Install documentation dependencies
         run: pip install -r requirements-docs.txt
 
+      # The Reference pages are VISTA's docs/ as of its latest release (never a
+      # pre-release), which is what researchers have installed.
+      - name: Find the latest VISTA release
+        id: vista
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: echo "tag=$(gh release view --repo Genesis-VISTA/vista --json tagName --jq .tagName)" >> "$GITHUB_OUTPUT"
+
+      - name: Check out VISTA's docs at that release
+        uses: actions/checkout@v4
+        with:
+          repository: Genesis-VISTA/vista
+          ref: ${{ steps.vista.outputs.tag }}
+          path: _vista
+          sparse-checkout: |
+            docs
+            scripts/docs_site
+
+      # The release carries the script and manifest that publish it.
+      - name: Copy VISTA's docs into the Reference section
+        run: python _vista/scripts/docs_site/sync_docs.py _vista . --ref "${{ steps.vista.outputs.tag }}"
+
       - name: Assemble website
         run: |
           mkdir -p _site
           cp index.html _site/index.html
           cp -R assets _site/assets
           touch _site/.nojekyll
-          mkdocs build --strict --site-dir _site/docs
+          mkdocs build --strict -f mkdocs.generated.yml --site-dir _site/docs
 
       - name: Configure GitHub Pages
         if: github.event_name != 'pull_request'

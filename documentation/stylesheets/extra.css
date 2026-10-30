@@ -10,16 +10,30 @@
   --vista-nav-tree: rgba(82, 109, 130, 0.3);
 }
 
+/* Material sets the link colour per scheme, on the body, so it is set here too. */
+[data-md-color-scheme="default"] {
+  --md-typeset-a-color: #00608c;
+}
+
 [data-md-color-scheme="slate"] {
   --md-default-bg-color: #0f1b2b;
   --md-default-fg-color: #eef4fb;
   --md-primary-fg-color: #132235;
   --md-accent-fg-color: #9ce2ff;
+  --md-typeset-a-color: #9ce2ff;
   --vista-nav-text: #c2cfdd;
   --vista-nav-hover: #eef4fb;
   --vista-nav-active: #b7c8d6;
   --vista-nav-active-bg: rgba(238, 244, 251, 0.065);
   --vista-nav-tree: rgba(183, 200, 214, 0.25);
+}
+
+/* Links take the accent: Material's default is the primary colour, which in the
+   dark scheme is the header's navy and nearly the page background. Hover keeps the
+   colour, so it underlines instead. */
+.md-typeset a:is(:hover, :focus-visible) {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
 }
 
 .md-header__button.md-logo img {
